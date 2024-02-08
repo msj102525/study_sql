@@ -254,8 +254,116 @@ DROP TABLE dept2 CASCADE CONSTRAINTS;
 -- DELETE 문 : 행 갯수 줄어듦 (복구됨)
 -- TRUNCATE 문 : 테이블의 모든 행을 삭제함 (복구 안 됨)
 
+SELECT * FROM employee;
 
+-- UPDATE 문 ---------------------------------------------
+/*
+기존에 기록된 데이터 값을 변경(수정)하는 구문
+작성형식 :
+UPDATE 테이블명
+SET 값바꿀컬럼명 = 바꿀값, 값바꿀컬럼명 = DEFAULT, 컬럼명 = (서브쿼리)
+WHERE 컬럼명 연산자 비교값 | (서브쿼리)
 
+주의 :
+바꿀 값은 해당 컬럼의 제약조건에 위배되지 않아야 함
+*/
 
+SELECT * FROM dcopy
+ORDER BY dept_id;
 
+UPDATE dcopy
+SET dept_name = '인사팀';
+--WHERE 절이 생략되면, 컬럼 전체 값이 수정됨
 
+-- 방금 사용한 DML 구문을 실행 취소 가능함
+ROLLBACK;
+
+UPDATE dcopy
+SET dept_name = '인사팀'
+WHERE dept_id = '10';
+
+UPDATE dcopy
+SET dept_name = '홍보팀'
+WHERE dept_id = '30';
+
+-- UPDATE 문 SET 절에 바꿀 값 대신에 서브쿼리 사용해도 됨
+-- WHERE 절에 비교값 대신에 서브쿼리 사용해도 됨
+SELECT * FROM emp_copy;
+
+-- 심하균 직원의 직급코드와 급여를
+-- 성혜교 직원의 직급코드와 급여로 변경
+SELECT job_id
+FROM emp_copy
+WHERE emp_name IN ('심하균', '성해교');
+
+UPDATE emp_copy
+SET job_id = (SELECT job_id
+                    FROM emp_copy
+                    WHERE emp_name = '성해교'),                    
+    salary = (SELECT salary
+                    FROM emp_copy
+                    WHERE emp_name = '성해교')
+WHERE emp_name = '심하균';
+
+-- UPDATE 후 확인
+SELECT emp_name, job_id, salary
+FROM emp_copy
+WHERE emp_name IN ('심하균', '성해교');
+
+-- 다중여 단일행 서브쿼리 적용 :
+UPDATE emp_copy
+SET (job_id, salary) = (SELECT job_id, salary
+                            FROM emp_copy
+                            WHERE emp_name = '성해교')
+WHERE emp_name = '심하균';
+
+-- SET 절에 바꿀 값에 DEFAULT 사용해도 됨
+-- 바꿀 컬럼에 DEFUALT가 설정되어 있으면 기본값으로 변경됨
+-- DEFAULT가 설정 안된 컬럼에 DEFAULT 사용하면 NULL로 처리됨
+ALTER TABLE emp_copy
+MODIFY (marriage DEFAULT 'N');
+
+-- 변경전 확인
+SELECT emp_name, marriage
+FROm emp_copy
+WHERE emp_id = '210';
+
+-- 변경후 확인
+UPDATE emp_copy
+SET marriage = DEFAULT
+WHERE emp_id = '210';
+
+-- UPDATE 문 WHERE 절에도 서브쿼리 적용 가능
+-- 해외영업2팀 직원들의 보너스포인트를 모두 0.3으로 변경
+
+UPDATE emp_copy
+SET bonus_pct = 0.3
+WHERE dept_id = (SELECT dept_id
+                            FROM department
+                            WHERE dept_name = '해외영업2팀'
+                            );
+
+-- 확인
+SELECT emp_name, bonus_pct, dept_id
+FROM emp_copy
+WHERE dept_id = (SELECT dept_id
+                            FROM department
+                            WHERE dept_name = '해외영업2팀'
+                            );
+ROLLBACK;                            
+   
+-- SET 절에 변경값은 제약조건 위배되지 않는 값이어야 한다
+ALTER TABLE emp_copy
+ADD CONSTRAINT fk_did_ecopy FOREIGN KEY (dept_id) REFERENCES department;
+
+-- 참조컬럼의 값 확인
+SELECT dept_id
+FROM department;
+
+UPDATE emp_copy
+SET dept_id = '65'
+WHERE dept_id IS NULL; -- 제고되지 않는 값임 : ERROR
+
+UPDATE emp_copy
+SET emp_no = NULL -- NOT NULL 제약조건이 있음 : ERROR
+WHERE emp_id = '100';
