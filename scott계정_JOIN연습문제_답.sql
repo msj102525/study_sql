@@ -1,0 +1,266 @@
+-- SCOTT 계정 : JOIN 연습문제
+-- 오라클 전용구문과 ANSI 표준구문 두 가지로 작성하시오.
+
+-- 1. 부서 테이블과 직원 테이블에서 사번, 사원명, 부서코드, 부서명을 조회하시오. 
+-- 사원명 기준 오름차순 정렬 처리함
+
+-- 오라클 : 
+SELECT EMPNO, ENAME, EMP.DEPTNO, DNAME
+FROM EMP, DEPT
+WHERE EMP.DEPTNO = DEPT.DEPTNO
+ORDER BY ENAME;
+
+-- ANSI : 
+SELECT EMPNO, ENAME, DEPTNO, DNAME
+FROM EMP
+JOIN DEPT USING (DEPTNO)
+ORDER BY ENAME;
+
+-- 2. 부서 테이블과 직원 테이블에서 급여가 2000 이상인 사원에 대하여
+-- 사번, 사원명, 급여, 부서명을 조회하시오. 
+-- 단, 급여기준으로 내림차순 정렬 처리함
+
+-- 오라클 : 
+SELECT EMPNO, ENAME, SAL, DNAME
+FROM EMP E, DEPT D
+WHERE E.DEPTNO = D.DEPTNO
+AND SAL > 2000
+ORDER BY SAL DESC;
+
+-- ANSI : 
+SELECT EMPNO, ENAME, SAL, DNAME
+FROM EMP
+JOIN DEPT USING (DEPTNO)
+WHERE SAL > 2000
+ORDER BY SAL DESC;
+
+
+-- 3. 부서 테이블과 직원 테이블에서 직무가 Manager이고 급여가 2500 이상인 직원의
+-- 사번, 사원명, 직무명, 급여, 부서명을 조회하시오. 
+-- 단, 사번을 기준으로 오름차순 정렬 처리함. 
+
+-- 오라클 : 
+SELECT EMPNO, ENAME, JOB, SAL, DNAME
+FROM EMP E, DEPT D
+WHERE E.DEPTNO = D.DEPTNO
+AND JOB = 'MANAGER'
+AND SAL >= 2500
+ORDER BY EMPNO;
+
+-- ANSI : 
+SELECT EMPNO, ENAME, JOB, SAL, DNAME
+FROM EMP
+JOIN DEPT USING (DEPTNO)
+WHERE JOB = 'MANAGER'
+AND SAL >= 2500
+ORDER BY EMPNO;
+
+
+-- 4. 직원 테이블과 급여 등급 테이블에서 
+-- 급여가 하한값과 상한값 범위에 포함되고 등급이 4인 직원들의
+-- 사번, 사원명, 급여, 등급을 조회하시오. 
+-- 단, 급여를 기준으로 내림차순 정렬 처리함
+
+-- 오라클 : 
+SELECT EMPNO, ENAME, SAL, GRADE
+FROM EMP, SALGRADE
+WHERE SAL BETWEEN LOSAL AND HISAL
+AND GRADE = 4
+ORDER BY SAL DESC;
+
+-- ANSI : 
+SELECT EMPNO, ENAME, SAL, GRADE
+FROM EMP
+JOIN SALGRADE ON (SAL BETWEEN LOSAL AND HISAL)
+WHERE GRADE = 4
+ORDER BY SAL DESC;
+
+-- 5. 부서 테이블, 직원 테이블, 급여등급 테이블에서 
+-- 급여가 하한값과 상한값 범위에 포함되는 등급을 지정하여
+-- 사번, 사원명, 부서명, 급여, 등급을 조회하시오. 
+-- 단, 등급을 기준으로 내림차순 정렬 처리함
+
+-- 오라클 : 
+SELECT EMPNO, ENAME, DNAME, SAL, GRADE
+FROM EMP E, DEPT D, SALGRADE
+WHERE SAL BETWEEN LOSAL AND HISAL
+AND E.DEPTNO = D.DEPTNO
+ORDER BY GRADE DESC;
+
+-- ANSI : 
+SELECT EMPNO, ENAME, DNAME, SAL, GRADE
+FROM EMP
+JOIN DEPT USING (DEPTNO)
+JOIN SALGRADE ON (SAL BETWEEN LOSAL AND HISAL)
+ORDER BY GRADE DESC;
+
+ 
+-- 6. 직원 테이블에서 사원명과 해당 사원의 관리자명을 조회하시오
+
+-- 오라클 : 
+SELECT E.ENAME 직원, M.ENAME 관리자
+FROM EMP E, EMP M
+WHERE E.EMPNO = M.MGR;
+
+-- ANSI : 
+SELECT E.ENAME 직원, M.ENAME 관리자
+FROM EMP E
+JOIN EMP M ON (E.EMPNO = M.MGR);
+
+
+-- 7. 직원 테이블에서 
+-- 사원명, 해당 사원의 관리자명, 해당 사원의 관리자의 관리자명을 조회하시오
+
+-- 오라클 : 
+SELECT E.ENAME 사원명, M.ENAME 관리자, C.ENAME 상위관리자
+FROM EMP E, EMP M, EMP C
+WHERE E.MGR = M.EMPNO
+AND M.MGR = C.EMPNO;
+
+-- ANSI : 
+SELECT E.ENAME 사원명, M.ENAME 관리자, C.ENAME 상위관리자
+FROM EMP E
+JOIN EMP M ON (E.MGR = M.EMPNO)
+JOIN EMP C ON (M.MGR = C.EMPNO);
+
+
+-- 8. 7번 결과에서 관리자와 상위 관리자가 없는 모든 직원의 정보도 출력되도록 수정하시오.
+
+-- 오라클 : 
+SELECT E.ENAME 사원명, M.ENAME 관리자, C.ENAME 상위관리자
+FROM EMP E, EMP M, EMP C
+WHERE E.MGR = M.EMPNO(+)
+AND M.MGR = C.EMPNO(+);
+
+-- ANSI : 
+SELECT E.ENAME 사원명, M.ENAME 관리자, C.ENAME 상위관리자
+FROM EMP E
+LEFT JOIN EMP M ON (E.MGR = M.EMPNO)
+LEFT JOIN EMP C ON (M.MGR = C.EMPNO);
+
+
+-- 9. 20번 부서의 이름과 그 부서에 근무하는 직원의 이름을 조회하시오.
+
+-- 오라클 : 
+SELECT DNAME, ENAME
+FROM DEPT D, EMP E
+WHERE D.DEPTNO = E.DEPTNO
+AND E.DEPTNO = 20;
+
+-- ANSI : 
+SELECT DNAME, ENAME
+FROM DEPT 
+JOIN EMP USING (DEPTNO)
+WHERE DEPTNO = 20;
+
+
+-- 10. 커미션을 받는 직원의 이름, 커미션, 부서이름을 조회하시오.
+
+-- 오라클 : 
+SELECT ENAME, COMM, DNAME
+FROM EMP E, DEPT D
+WHERE E.DEPTNO = D.DEPTNO
+AND COMM IS NOT NULL 
+AND COMM != 0;
+
+-- ANSI : 
+SELECT ENAME, COMM, DNAME
+FROM EMP 
+JOIN DEPT USING (DEPTNO)
+WHERE COMM IS NOT NULL 
+AND COMM != 0;
+
+
+-- 11. 이름에 ‘A’ 가 들어가는 직원들의 이름과 부서명을 조회하시오.
+
+-- 오라클 : 
+SELECT ENAME, DNAME
+FROM EMP E, DEPT D
+WHERE E.DEPTNO = D.DEPTNO
+AND ENAME LIKE '%A%';
+
+-- ANSI : 
+SELECT ENAME, DNAME
+FROM EMP 
+JOIN DEPT USING (DEPTNO)
+WHERE ENAME LIKE '%A%';
+
+
+-- 12. DALLAS에 근무하는 직원 중 급여가 1500 이상인 
+-- 사원의 이름, 급여, 입사일, 보너스(comm)를 조회하시오.
+-- 급여 기준 내림차순 정렬 처리함
+
+-- 오라클 : 
+SELECT ENAME, SAL, HIREDATE, COMM
+FROM EMP E, DEPT D
+WHERE E.DEPTNO = D.DEPTNO
+AND LOC = 'DALLAS'
+AND SAL >= 1500
+ORDER BY SAL DESC;
+
+-- ANSI : 
+SELECT ENAME, SAL, HIREDATE, COMM
+FROM EMP 
+JOIN DEPT USING (DEPTNO)
+WHERE LOC = 'DALLAS'
+AND SAL >= 1500
+ORDER BY SAL DESC;
+
+
+-- 13. 자신의 관리자 보다 연봉(sal)을 많이 받는 
+-- 직원의 이름과 연봉을 조회하시오.
+
+-- 오라클 : 
+SELECT E.ENAME, E.SAL
+FROM EMP E, EMP M
+WHERE E.MGR = M.EMPNO
+AND E.SAL > M.SAL;
+
+-- ANSI : 
+SELECT E.ENAME, E.SAL
+FROM EMP E
+JOIN EMP M ON (E.MGR = M.EMPNO)
+WHERE E.SAL > M.SAL;
+
+
+-- 14. 직원 중 현재시간 기준으로 근무개월 수가 
+-- 30년을 초과한 직원의 이름, 급여, 입사일, 부서명을 조회하시오
+
+-- 오라클 : 
+SELECT ENAME, SAL, HIREDATE, DNAME
+FROM EMP E, DEPT D
+WHERE E.DEPTNO = D.DEPTNO
+AND MONTHS_BETWEEN(SYSDATE, HIREDATE) > 360;
+
+-- ANSI : 
+SELECT ENAME, SAL, HIREDATE, DNAME
+FROM EMP 
+JOIN DEPT USING (DEPTNO)
+WHERE MONTHS_BETWEEN(SYSDATE, HIREDATE) > 360;
+
+
+-- 15. 각 부서별로 1982년 이전에 입사한 직원들의 인원수를 조회하시오.
+-- 부서번호 기준으로 오름차순 정렬 처리함
+
+-- 오라클 : 
+SELECT E.DEPTNO 부서번호, COUNT(ENAME) 직원수
+FROM EMP E, DEPT D
+WHERE E.DEPTNO = D.DEPTNO
+AND EXTRACT(YEAR FROM HIREDATE) <= 1982
+GROUP BY E.DEPTNO
+ORDER BY 1;
+
+-- ANSI : 
+SELECT DEPTNO 부서번호, COUNT(ENAME) 직원수
+FROM EMP 
+JOIN DEPT USING (DEPTNO)
+WHERE EXTRACT(YEAR FROM HIREDATE) <= 1982
+GROUP BY DEPTNO
+ORDER BY DEPTNO;
+
+
+
+
+
+
+

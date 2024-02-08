@@ -629,8 +629,8 @@ SELECT
     loc_describe 근무지역명
 FROM
     employee e
-NATURAL JOIN department d
-JOIN location l ON l.location_id = d.loc_id
+LEFt JOIN department d ON d.dept_id = e.dept_id
+LEFT JOIN location l ON l.location_id = d.loc_id
 WHERE bonus_pct IS NOT NULL
 ORDER BY
     근무지역명;
@@ -683,20 +683,52 @@ WHERE
     AND d.loc_id = l.location_id
     AND d.dept_id LIKE '20';
 
---8. 직급별 연봉의 최소급여(MIN_SAL)보다 많이 받는 직원들의
---사원명, 직급명, 급여, 연봉을 조회하시오.
---연봉에 보너스포인트를 적용하시오.
+-- 8. 직급별 연봉의 최소급여(MIN_SAL)보다 많이 받는 직원들의
+-- 사원명, 직급명, 급여, 연봉을 조회하시오.
+-- 연봉은 보너스포인트를 적용하시오.
+-- ANSI
+SELECT EMP_NAME, JOB_TITLE, SALARY, 
+       (SALARY + NVL(BONUS_PCT, 0) * SALARY) * 12 연봉
+FROM EMPLOYEE
+JOIN JOB USING (JOB_ID)       
+WHERE (SALARY + NVL(BONUS_PCT, 0) * SALARY) * 12 
+      > MIN_SAL;
 
+-- ORACLE
+SELECT EMP_NAME, JOB_TITLE, SALARY, 
+       (SALARY + NVL(BONUS_PCT, 0) * SALARY) * 12 연봉
+FROM EMPLOYEE E, JOB J
+WHERE E.JOB_ID = J.JOB_ID     
+AND (SALARY + NVL(BONUS_PCT, 0) * SALARY) * 12 > MIN_SAL;
 
+-- 9 . 한국(KO)과 일본(JP)에 근무하는 직원들의 
+-- 사원명(emp_name), 부서명(dept_name), 지역명(loc_describe),
+--  국가명(country_name)을 조회하시오.
+-- ANSI
+SELECT EMP_NAME 사원명, DEPT_NAME 부서명,
+       LOC_DESCRIBE 지역명, COUNTRY_NAME 국가명
+FROM EMPLOYEE
+JOIN DEPARTMENT USING (DEPT_ID)
+JOIN LOCATION ON (LOCATION_ID = LOC_ID)
+JOIN COUNTRY USING (COUNTRY_ID)       
+WHERE COUNTRY_ID IN ('KO', 'JP');
 
---9. 한국(KO)과 일본(JP)에 근무하는 직원들의 
---사원명(emp_name), 부서명(dept_name), 지역명(loc_describe), 국가명(country_name)을 조회하시오.
+-- ORACLE
+SELECT EMP_NAME 사원명, DEPT_NAME 부서명,
+       LOC_DESCRIBE 지역명, COUNTRY_NAME 국가명
+FROM EMPLOYEE E, DEPARTMENT D, LOCATION L, COUNTRY C
+WHERE E.DEPT_ID = D.DEPT_ID
+AND D.LOC_ID = L.LOCATION_ID
+AND L.COUNTRY_ID = C.COUNTRY_ID      
+AND L.COUNTRY_ID IN ('KO', 'JP');
 
---10. 같은 부서에 근무하는 직원들의 사원명, 부서코드, 동료이름을 조회하시오.
---self join 사용
-
---11. 보너스포인트가 없는 직원들 중에서 직급코드가 J4와 J7인 직원들의 사원명, 직급명, 급여를 조회하시오.
---단, join과 IN 사용할 것
-
---12. 소속부서가 50 또는 90인 직원중
--- 기혼인 직원과 미혼인 직원의 수를 조회하시오.
+-- 10. 같은 부서에 근무하는 직원들의 
+-- 사원명, 부서코드, 동료이름, 부서코드를 조회하시오.
+-- self join 사용
+-- ORACLE
+SELECT E.EMP_NAME 사원명, E.DEPT_ID 부서코드, 
+       C.EMP_NAME 동료이름, C.DEPT_ID 부서코드
+FROM EMPLOYEE E, EMPLOYEE C
+WHERE E.EMP_NAME <> C.EMP_NAME
+AND E.DEPT_ID = C.DEPT_ID
+ORDER BY E.EMP_NAME;
