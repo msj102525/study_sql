@@ -85,37 +85,129 @@ GROUP BY d.department_name;
 SELECT * FROM VW_학과별학생수;
 
 -- 13.
---UPDATE VW_학과별학생수
+UPDATE VW_학생일반정보
+SET 학생이름 = '문승종'
+WHERE 학번 = 'A213046';
 
+SELECT * FROM VW_학생일반정보;
+
+-- 14.
+CREATE OR REPLACE VIEW VW_학생일반정보
+AS
+SELECT student_no 학번, student_name 학생이름, student_address 주소
+FROM tb_student
+WITH READ ONLY;
+SELECT * FROM vw_지도면담;
 
 -- 15.
-SELECT * FROM(
 SELECT
-    c.class_no,
-    c.class_name,
-    COUNT(s.student_name) 학생수
+    *
 FROM
-        tb_student s
-    JOIN tb_grade g ON g.student_no = s.student_no
-    JOIN tb_class c ON c.class_no = g.class_no
+    (
+        SELECT
+            c.class_no,
+            c.class_name,
+            COUNT(s.student_name) 학생수
+        FROM
+                 tb_student s
+            JOIN tb_grade g ON g.student_no = s.student_no
+            JOIN tb_class c ON c.class_no = g.class_no
+        WHERE
+            substr(g.term_no, 1, 4) BETWEEN '2007' AND '2009'
+        GROUP BY
+            c.class_no,
+            c.class_name
+        ORDER BY
+            3 DESC
+    )
 WHERE
-    substr(g.term_no, 1, 4) BETWEEN '2007' AND '2009'
-GROUP BY
-    c.class_no,
-    c.class_name
-ORDER BY
-    3 DESC
-)
-WHERE ROWNUM <=3 ;
+    ROWNUM <= 3;
 
+--------------------------------------------
+-- 1.
+INSERT INTO tb_class_type (class_type_no, class_type_name)
+VALUES (01, '전공필수');
+INSERT INTO tb_class_type (class_type_no, class_type_name)
+VALUES (02, '전공선택');
+INSERT INTO tb_class_type (class_type_no, class_type_name)
+VALUES (03, '교양필수');
+INSERT INTO tb_class_type (class_type_no, class_type_name)
+VALUES (04, '교양선택');
+INSERT INTO tb_class_type (class_type_no, class_type_name)
+VALUES (05, '논문지도');
 
+-- 2.
+CREATE OR REPLACE VIEW TB_학생일반정보
+AS
+SELECT
+    student_no,
+    student_name,
+    student_address
+FROM
+    tb_student;
     
+-- 3.
+CREATE OR REPLACE VIEW TB_국어국문학과
+AS
+SELECT
+    s.student_no 학번,
+    s.student_name 학생이름,
+    substr(s.student_ssn, 1, 6) 출생년도,
+    p.professor_name 교수이름
+FROM
+    tb_student s
+JOIN
+    tb_professor p ON p.professor_no = s.coach_professor_no
+JOIN
+    tb_department d ON d.department_no = s.department_no
+WHERE
+    d.department_name = '국어국문학과';
     
+-- 4.
+UPDATE tb_department
+SET capacity = capacity + (ROUND(capacity /10));
+COMMIT;
+SELECT
+    capacity
+FROM
+    tb_department;
+    
+-- 5.
+UPDATE tb_student
+SET student_address = '서울시 종로구 숭인동 181-21'
+WHERE student_no = 'A413042';
+COMMIT;
+SELECT * FROM tb_student WHERE student_no = 'A413042';
 
+-- 6.
+UPDATE tb_student
+SET student_ssn = SUBSTR(student_ssn, 1, 6);
+COMMIT;
+SELECT student_ssn
+FROM tb_student;
 
+-- 7.
+UPDATE tb_grade
+SET point = 3.5
+WHERE class_no = (
+    SELECT
+        class_no
+    FROM
+        tb_class c
+    JOIN tb_student s ON c.department_no = s.department_no
+    WHERE s.student_name = '김명훈' AND c.class_name = '피부생리학' 
+        
+) AND term_no = 200501 ;
 
-
-
+rollback;
+DELETE FROM tb_grade
+WHERE student_no IN(
+    SELECT
+        student_no
+    FROM
+        tb_student
+    WHERE absence_yn ='Y'
+);
 
 
 
