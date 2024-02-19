@@ -134,9 +134,215 @@ BEGIN
 END;
 /
 
+--PL/SQL 반복문 ----------------------------------
+-- BASIC LOOP, FOR LOOP, WHILE LOOP, EXIT (자바의 BREAK와 같음)
 
+-- BASIC LOOP 문
+-- 자바의 do ~ while 문과 같은 형태임.
+/*
+작성형식 :
+LOOP
+    반복 실행시킬 문장;
+    ----..;
+    IF 반복종료조건 THEN
+        EXIT;
+    END IF;
+    또는
+    EXIT [WHEN 반복종료조건];
+END LOOP;
+*/
 
+-- 예제 > BASIC LOOP 문으로 1부터 5까지 출력하기
+SET SERVEROUTPUT ON;
+DECLARE
+    n NUMBER:=1;
+BEGIN
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(n);
+        n := n+1;
+        IF n > 5 THEN
+            EXIT;
+        END IF;
+    END LOOP;
+END;
+/
 
+-- FOR LOOP 문
+-- FOR LOOP 문에서 카운트용 변수는 자동 선언되므로. 따로 변수 선언할 필요 없음
+-- 카운트 값은 자동으로 1씩 증가함
+-- REVERSE 는 1씩 감소함을 의미함
+/*
+작성형식 :
+FOR 카운트용변수 IN [REVERSE] 시작값..종료값 LOOP
+    반복 실행할 문장;
+    .....
+END LOOP;
+*/
 
+-- 예제 > FOR LOOP 문으로 1 부터 5까지 출력하기
+DECLARE
+BEGIN
+    FOR n IN 1..5 LOOP
+        DBMS_OUTPUT.PUT_LINE(n);
+    END LOOP;
+END;
+/
 
+-- 실습 > 1부터 10까지 반복하여 TEST1 테이블에 저장하기
+CREATE TABLE TEST1(
+    bunho NUMBER(3),
+    irum VARCHAR2(10)
+);
 
+-- DECLARE -- 변수 선언이 없으면 생략해도 됨
+BEGIN
+    FOR no IN 1..10 LOOP
+        INSERT INTO TEST1 VALUES(no, TO_CHAR(no || '번'));
+    END LOOP;
+    
+    COMMIT;
+END;
+/
+-- 확인
+SELECT * FROM test1;
+TRUNCATE TABLE test1;
+
+-- 실습 2> 구구단의 홀수단만 출력되게 하기(for문, if문 혼합)
+DECLARE
+    result NUMBER;
+BEGIN
+    FOR dan in 2..9 LOOP
+    IF MOD(dan, 2) = 1 THEN
+        FOR su IN 1..9 LOOP
+            result := dan * su;
+            DBMS_OUTPUT.PUT_LINE(dan || ' * ' || su || ' = ' || result);
+            END LOOP;
+        END IF;        
+    END LOOP;
+END;
+/
+
+-- WHILE LOOP 문
+-- 제어 조건이 TRUE 인 동안만 문장이 반복 실행됨
+-- LOOP를  실행할 때 조건이 처음부터 FALSE이면 한번도 수행되지 않을 경우도 있음
+
+/*
+작성형식 :
+WHILE 반복시킬조건식 LOOP
+    반복실행할 구문;
+    .....
+END LOOP;
+*/
+
+-- 예제> WHILE LOOP 문으로 1부터 5까지 출력하기
+DECLARE
+    n NUMBER := 1;
+BEGIN
+    WHILE n<5 LOOP
+        DBMS_OUTPUT.PUT_LINE(n);
+        n := n+1;
+    END LOOP;
+END;
+/
+
+-- 실습 2> 구구단의 홀수단만 출력되게 하기
+-- WHILE LOOP 사용
+DECLARE
+    RESULT NUMBER;
+    DAN NUMBER := 2;
+     SU NUMBER;
+BEGIN
+    WHILE DAN <= 9 LOOP
+     SU := 1;
+        WHILE SU <= 9 LOOP
+        RESULT := DAN * SU;
+        IF MOD(RESULT, 2) = 1 THEN
+             DBMS_OUTPUT.PUT_LINE(DAN || ' * ' || SU || ' = ' || RESULT);
+        END IF;
+        SU := SU + 1;
+        END LOOP;
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DAN := DAN + 1;
+    END LOOP;
+END;
+/
+
+-- PL/SQL 블럭의 EXCEPTION (예외) 처리 ********************
+-- 예 > UNIQUE INDEX 가 설정된 컬럼에 중복값 입력한 경우의 예외처리
+CREATE TABLE EXAM_MEMBERS (
+    mid VARCHAR2(20) PRIMARY KEY,
+    pwd VARCHAR2(20),
+    name VARCHAR2(20)
+);
+
+INSERT INTO EXAM_MEMBERS VALUES ('javaKING', '111', '자바낑');
+COMMIT;
+
+SELECT * FROM EXAM_MEMBERS;
+
+-- PL/SQL 블럭의 예외처리 :
+BEGIN
+    INSERT INTO EXAM_MEMBERS VALUES ('javaKING', '111', '자바낑');
+EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN
+        DBMS_OUTPUT.PUT_LINE('회원의 아이디가 중복되었습니다');
+END;
+/
+
+-- 시스템이 제공하는 예외이름을 모르거나, 이름이 제공되지 않는 에러가 발생한 경우
+-- 예외로 다루려면 직접 예외이름을 정의하면 됨
+DECLARE
+    TOOLARGE_MID EXCEPTION;
+    PRAGMA EXCEPTION_INIT(TOOLARGE_MID, -12899);
+BEGIN
+    INSERT INTO EXAM_MEMBERS VALUES ('javaKING111111111111111111111111111', '111', '자바낑');
+EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN
+        DBMS_OUTPUT.PUT_LINE('회원의 아이디가 중복되었습니다');
+    WHEN TOOLARGE_MID THEN
+        DBMS_OUTPUT.PUT_LINE('아이디가 지정된 바이트수를 초과하였습니다');
+END;
+/
+
+--실습> 아이디와 암호를 입력받아,
+-- 아이디와 암호는 글자갯수가 10 글자이상 15 글자 미만일 때만 정상 출력하고
+-- 글자 갯수가 10 글자 미만이면, TOOSHORT 에외 발생시키고 
+-- 글자 갯수가 15 글자 이상이면, TOOLONG 예외 발생시키도록 PL/SQL 구문을작성하시오.
+-- TOOLONG 은 제공되는 오류코드 -12899 에 대해 매핑하고,
+-- TOOSHORT 는 오류코드를 -20001 로 새로 정하고, 메세지는 '글자갯수부족'으로 처리함
+---- 아이디는 같은 값 두번 입력못하게 중복 예외 적용함.
+---- 아이디 중복 예외 테스트용 초기값 대입한 아이디 변수 따로 준비해 놓음
+---- 입력된 아이디와 준비된 변수값이 같으면 중복 예외 발생시킴
+-- 참고 : (RAISE_APPLICATION_ERROR(-에러코드, 출력메세지);
+
+DECLARE
+    vid VARCHAR2(14) := 'STUDENT0123';
+    v_id VARCHAR2(14);
+    v_pwd varchar2(14);
+    TOOSHORT EXCEPTION;
+    TOOLONG EXCEPTION;
+    PRAGMA EXCEPTION_INIT(TOOLONG, -12899);
+    PRAGMA EXCEPTION_INIT(TOOSHORT, -20001);
+BEGIN
+    v_id := '&id';
+    v_pwd := '&pwd';
+    
+    IF (LENGTH(V_ID) < 10 OR LENGTH(V_PWD) < 10) THEN
+        RAISE_APPLICATION_ERROR(-20001, '글자 갯수 부족');
+    END IF;
+
+    IF VID = V_ID THEN
+        RAISE DUP_VAL_ON_INDEX;
+     END IF;
+    
+EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN
+        DBMS_OUTPUT.PUT_LINE('아이디가 중복되었습니다');
+    WHEN TOOLONG THEN
+        DBMS_OUTPUT.PUT_LINE('글자 갯수 범위 초과');
+    WHEN TOOSHORT THEN
+        DBMS_OUTPUT.PUT_LINE('글자 갯수 부족');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('알수 없는 오류가 발생');
+END;
+/

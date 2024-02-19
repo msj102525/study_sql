@@ -208,7 +208,7 @@ WHERE student_no IN(
         tb_student
     WHERE absence_yn ='Y'
 );
-
+COMMIT;
 
 
 
