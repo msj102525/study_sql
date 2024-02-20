@@ -236,8 +236,45 @@ FROM
 JOIN TB_BOOK_AUTHOR USING (writer_no)
 JOIN TB_BOOK USING (book_no)
 ;
+-- 19.
+SELECT
+    book_nm,
+    price,
+    stock_qty,
+    CASE
+        WHEN stock_qty < 5 THEN '추가주문필요'
+        ELSE '소량보유'
+    END stock_status
+FROM
+    TB_BOOK
+JOIN TB_PUBLISHER USING (publisher_nm)
+WHERE publisher_nm = '황금가지' AND stock_qty < 10
+ORDER BY stock_qty DESC;
 
+-- 20.
+SELECT 
+    b.book_nm 도서명,
+    wa.writer_nm 작가,
+    wt.writer_nm 역자
+FROM 
+    TB_BOOK b
+JOIN TB_BOOK_AUTHOR a ON a.book_no = b.book_no
+JOIN TB_BOOK_TRANSLATOR t ON t.book_no = b.book_no
+JOIN TB_WRITER wa ON wa.writer_no = a.writer_no
+JOIN TB_WRITER wt ON wt.writer_no = t.writer_no
+WHERE book_nm = '아타트롤';
 
+-- 21.
+SELECT
+    book_nm 도서명,
+    stock_qty 재고수량,
+    price "가격(org)",
+    (price - (price * 0.2)) "가격(new)",
+    FLOOR((MONTHS_BETWEEN(sysdate, issue_date) / 12))
+FROM
+    TB_BOOK
+WHERE   FLOOR((MONTHS_BETWEEN(sysdate, issue_date) / 12)) >= 30
+ORDER BY 재고수량 DESC, "가격(new)" DESC, 도서명;
 
 
 
